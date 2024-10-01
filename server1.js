@@ -256,6 +256,23 @@ app.get('/api/getApprovedPlacementData', async (req, res) => {
   }
 });
 
+app.post('/api/addPlacementData', (req, res) => {
+    const { year, collegeName, collegeEmail, numberOfCompanies, departments } = req.body;
+
+    const newPlacement = new Placement({
+        year,
+        collegeName,
+        collegeEmail,
+        numberOfCompanies,
+        departments
+    });
+
+    newPlacement.save()
+        .then(() => res.status(200).json({ message: 'Placement data added successfully!' }))
+        .catch(err => res.status(400).json({ error: err.message }));
+});
+
+
 // Start Server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
