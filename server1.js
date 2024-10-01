@@ -98,6 +98,19 @@ const CollegeAdminSchema = new mongoose.Schema({
   branches: { type: [String], required: true },
 });
 
+const collegeAdminSchema = new mongoose.Schema({
+    email: { type: String, required: true },
+    location: { type: String, required: true },
+    pincode: { type: String, required: true },
+    universityAffiliation: { type: String, required: true },
+    naacCertPhoto: { type: String, required: true },
+    website: { type: String, required: true },
+    noOfBranches: { type: Number, required: true },
+    branches: { type: [String], required: true }
+});
+
+const CollegeAdmin = mongoose.model('CollegeAdmin', collegeAdminSchema);
+
 // Create Models
 const Student = mongoose.model('Student', StudentSchema);
 const User = mongoose.model('User', UserSchema);
@@ -306,6 +319,22 @@ app.get('/api/getApprovedPlacementData', async (req, res) => {
     } catch (error) {
         console.error('Error fetching placement data:', error);
         res.status(500).json({ message: 'Error fetching placement data' });
+    }
+});
+
+app.post('/collegeAdminData', async (req, res) => {
+    const { email, location, pincode, universityAffiliation, naacCertPhoto, website, noOfBranches, branches } = req.body;
+
+    try {
+        if (!email || !location || !pincode || !universityAffiliation || !naacCertPhoto || !website || !noOfBranches || !branches) {
+            return res.status(400).json({ error: 'All fields are required' });
+        }
+
+        const newCollegeAdmin = new CollegeAdmin({ email, location, pincode, universityAffiliation, naacCertPhoto, website, noOfBranches, branches });
+        await newCollegeAdmin.save();
+        res.status(201).send({ status: "ok", message: "College Admin data saved successfully" });
+    } catch (error) {
+        res.status(500).send({ error: "Error saving College Admin data" });
     }
 });
 
