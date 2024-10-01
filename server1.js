@@ -87,7 +87,24 @@ const PlacementSchema = new mongoose.Schema({
   ],
 });
 
-const CollegeAdminSchema = new mongoose.Schema({
+
+
+
+
+
+
+
+
+
+
+// Create Models
+const Student = mongoose.model('Student', StudentSchema);
+const User = mongoose.model('User', UserSchema);
+const Placement = mongoose.model('Placement', PlacementSchema);
+
+
+
+const collegeAdminSchema = new mongoose.Schema({
   email: { type: String, required: true },
   location: { type: String, required: true },
   pincode: { type: String, required: true },
@@ -95,27 +112,24 @@ const CollegeAdminSchema = new mongoose.Schema({
   naacCertPhoto: { type: String, required: true },
   website: { type: String, required: true },
   noOfBranches: { type: Number, required: true },
-  branches: { type: [String], required: true },
-});
-
-const collegeAdminSchema = new mongoose.Schema({
-    email: { type: String, required: true },
-    location: { type: String, required: true },
-    pincode: { type: String, required: true },
-    universityAffiliation: { type: String, required: true },
-    naacCertPhoto: { type: String, required: true },
-    website: { type: String, required: true },
-    noOfBranches: { type: Number, required: true },
-    branches: { type: [String], required: true }
+  branches: { type: [String], required: true }
 });
 
 const CollegeAdmin = mongoose.model('CollegeAdmin', collegeAdminSchema);
 
-// Create Models
-const Student = mongoose.model('Student', StudentSchema);
-const User = mongoose.model('User', UserSchema);
-const Placement = mongoose.model('Placement', PlacementSchema);
-const CollegeAdmin = mongoose.model('CollegeAdmin', CollegeAdminSchema);
+const approvedCollegeAdminSchema = new mongoose.Schema({
+  email: { type: String, required: true },
+  location: { type: String, required: true },
+  pincode: { type: String, required: true },
+  universityAffiliation: { type: String, required: true },
+  naacCertPhoto: { type: String, required: true },
+  website: { type: String, required: true },
+  noOfBranches: { type: Number, required: true },
+  branches: { type: [String], required: true }
+});
+
+const ApprovedCollegeAdmin = mongoose.model('ApprovedCollegeAdmin', approvedCollegeAdminSchema);
+
 
 // Middleware
 app.use(cors()); // Enable CORS
