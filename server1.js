@@ -70,19 +70,23 @@ const UserSchema = new mongoose.Schema({
 });
 
 const PlacementSchema = new mongoose.Schema({
-  year: Number,
-  collegeName: String,
-  collegeEmail: String,
-  numberOfCompanies: Number,
-  departments: [{
-    departmentName: String,
-    companies: [{
-      companyName: String,
-      avgPackage: Number,
-      status: String,
-      totalPlaced: Number
-    }]
-  }]
+    year: Number,
+    collegeName: String,
+    collegeEmail: String,
+    numberOfCompanies: Number,
+    departments: [
+        {
+            departmentName: String,
+            companies: [
+                {
+                    companyName: String,
+                    avgPackage: Number,
+                    status: String,
+                    totalPlaced: Number
+                }
+            ]
+        }
+    ]
 });
 
 const CollegeAdminSchema = new mongoose.Schema({
@@ -274,6 +278,16 @@ app.post('/upload-placement', upload.single('placementFile'), async (req, res) =
   } catch (error) {
     console.error('Error uploading placement data:', error);
     res.status(500).json({ message: 'Failed to upload placement data.' });
+  }
+});
+
+app.get('/api/getApprovedPlacementData', async (req, res) => {
+  try {
+      const placements = await Placement.find(); // Fetch all approved placement data
+      res.json(placements);
+  } catch (error) {
+      console.error('Error fetching placement data:', error);
+      res.status(500).json({ message: 'Error fetching placement data' });
   }
 });
 
