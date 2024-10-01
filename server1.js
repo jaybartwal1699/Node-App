@@ -245,17 +245,6 @@ app.post('/upload-placement', upload.single('placementFile'), async (req, res) =
   }
 });
 
-// Fetch Placement Data
-app.get('/api/getApprovedPlacementData', async (req, res) => {
-  try {
-    const placements = await Placement.find(); // Fetch all approved placement data
-    res.json(placements);
-  } catch (error) {
-    console.error('Error fetching placement data:', error);
-    res.status(500).json({ message: 'Error fetching placement data' });
-  }
-});
-
 app.post('/api/addPlacementData', (req, res) => {
     const { year, collegeName, collegeEmail, numberOfCompanies, departments } = req.body;
 
@@ -270,6 +259,54 @@ app.post('/api/addPlacementData', (req, res) => {
     newPlacement.save()
         .then(() => res.status(200).json({ message: 'Placement data added successfully!' }))
         .catch(err => res.status(400).json({ error: err.message }));
+});
+
+app.get('/api/getUnapprovedPlacementData', (req, res) => {
+    Placement.find({})
+        .then(data => res.status(200).json(data))
+        .catch(err => res.status(400).json({ error: err.message }));
+});
+
+// API to approve placement data
+app.post('/api/approvePlacementData', (req, res) => {
+    const placementId = req.body.id;
+
+    // Find the placement data by ID
+    Placement.findById(placementId)
+        .then(placement => {
+            if (!placement) {
+                return res.status(404).json({ message: 'Placement data not found' });
+            }
+
+            // Insert placement data into the approved collection
+            const approvedPlacement = new PlacementApproved({
+                year: placement.year,
+                collegeName: placement.collegeName,
+                collegeEmail: placement.collegeEmail,
+                numberOfCompanies: placement.numberOfCompanies,
+                departments: placement.departments
+            });
+
+            approvedPlacement.save()
+                .then(() => {
+                    // Once saved, remove it from the unapproved collection
+                    Placement.findByIdAndDelete(placementId)
+                        .then(() => res.status(200).json({ message: 'Placement data approved successfully!' }))
+                        .catch(err => res.status(400).json({ error: err.message }));
+                })
+                .catch(err => res.status(400).json({ error: err.message }));
+        })
+        .catch(err => res.status(400).json({ error: err.message }));
+});
+
+app.get('/api/getApprovedPlacementData', async (req, res) => {
+    try {
+        const placements = await Placement.find(); // Fetch all approved placement data
+        res.json(placements);
+    } catch (error) {
+        console.error('Error fetching placement data:', error);
+        res.status(500).json({ message: 'Error fetching placement data' });
+    }
 });
 
 
