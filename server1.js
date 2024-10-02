@@ -352,6 +352,35 @@ app.post('/collegeAdminData', async (req, res) => {
     }
 });
 
+app.get('/api/students/recommendationInfo', async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    // Check if email is provided
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+
+    // Fetch student data by email and only retrieve the necessary fields
+    const student = await Student.findOne({ email }, 'email location parents.fatherSalary parents.motherSalary');
+
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    // Send the necessary information in the response
+    res.status(200).json({
+      email: student.email,
+      location: student.location,
+      fatherSalary: student.parents.fatherSalary,
+      motherSalary: student.parents.motherSalary,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching student data', error: error.message });
+  }
+});
+
+
 
 // Start Server
 const PORT = process.env.PORT || 3000;
