@@ -73,6 +73,7 @@ const User = mongoose.model('User', UserSchema);
 
 
 //placements
+// Define Schemas
 const PlacementSchema = new mongoose.Schema({
     year: Number,
     collegeName: String,
@@ -89,8 +90,10 @@ const PlacementSchema = new mongoose.Schema({
     }]
 });
 
+// Unapproved placement collection
 const Placement = mongoose.model('Placement', PlacementSchema, 'Placement_Collection');
 
+// Approved placement collection
 const PlacementApprovedSchema = new mongoose.Schema({
     year: Number,
     collegeName: String,
@@ -108,10 +111,6 @@ const PlacementApprovedSchema = new mongoose.Schema({
 });
 
 const PlacementApproved = mongoose.model('PlacementApproved', PlacementApprovedSchema, 'Placement_Collection_Approved');
-
-
-
-
 
 
 const collegeAdminSchema = new mongoose.Schema({
@@ -282,63 +281,71 @@ app.post('/upload-placement', upload.single('placementFile'), async (req, res) =
   }
 });
 //placement all apis
+app.post('/api/addPlacementData', (req, res) => {
+    const { year, collegeName, collegeEmail, numberOfCompanies, departments } = req.body;
 
-// POST: /api/addPlacementData
-app.post('/api/addPlacementData', async (req, res) => {
-  try {
-      const placementData = new PlacementData({
-          collegeName: req.body.collegeName,
-          year: req.body.year,
-          collegeEmail: req.body.collegeEmail,
-          numberOfCompanies: req.body.numberOfCompanies,
-          departments: req.body.departments,
-          isApproved: false // Ensure new data is marked as unapproved
-      });
-      
-      await placementData.save();
-      res.status(201).send({ message: 'Placement data submitted successfully and awaiting approval.' });
-  } catch (error) {
-      res.status(500).send({ message: 'Error submitting placement data', error });
-  }
+    const newPlacement = new Placement({
+        year,
+        collegeName,
+        collegeEmail,
+        numberOfCompanies,
+        departments
+    });
+
+    newPlacement.save()
+        .then(() => res.status(200).json({ message: 'Placement data added successfully!' }))
+        .catch(err => res.status(400).json({ error: err.message }));
 });
 
-// GET: /api/getUnapprovedPlacementData
-app.get('/api/getUnapprovedPlacementData', async (req, res) => {
-  try {
-      const unapprovedData = await PlacementData.find({ isApproved: false }); // Fetch only unapproved data
-      res.status(200).send(unapprovedData);
-  } catch (error) {
-      res.status(500).send({ message: 'Error fetching unapproved placement data', error });
-  }
+// Fetch Unapproved Placement Data
+app.get('/api/getUnapprovedPlacementData', (req, res) => {
+    Placement.find({})
+        .then(data => res.status(200).json(data))
+        .catch(err => res.status(400).json({ error: err.message }));
 });
 
-// POST: /api/approvePlacementData
-app.post('/api/approvePlacementData', async (req, res) => {
-  try {
-      const { id } = req.body;
-      const updatedData = await PlacementData.findByIdAndUpdate(id, { isApproved: true }, { new: true }); // Update isApproved to true
-      
-      if (!updatedData) {
-          return res.status(404).send({ message: 'Placement data not found' });
-      }
-      
-      res.status(200).send({ message: 'Placement data approved successfully.' });
-  } catch (error) {
-      res.status(500).send({ message: 'Error approving placement data', error });
-  }
+// Approve Placement Data
+app.post('/api/approvePlacementData', (req, res) => {
+    const placementId = req.body.id;
+
+    // Find the placement data by ID
+    Placement.findById(placementId)
+        .then(placement => {
+            if (!placement) {
+                return res.status(404).json({ message: 'Placement data not found' });
+            }
+
+            // Insert placement data into the approved collection
+            const approvedPlacement = new PlacementApproved({
+                year: placement.year,
+                collegeName: placement.collegeName,
+                collegeEmail: placement.collegeEmail,
+                numberOfCompanies: placement.numberOfCompanies,
+                departments: placement.departments
+            });
+
+            approvedPlacement.save()
+                .then(() => {
+                    // Once saved, remove it from the unapproved collection
+                    Placement.findByIdAndDelete(placementId)
+                        .then(() => res.status(200).json({ message: 'Placement data approved successfully!' }))
+                        .catch(err => res.status(400).json({ error: err.message }));
+                })
+                .catch(err => res.status(400).json({ error: err.message }));
+        })
+        .catch(err => res.status(400).json({ error: err.message }));
 });
 
-// GET: /api/getApprovedPlacementData
+// Fetch Approved Placement Data
 app.get('/api/getApprovedPlacementData', async (req, res) => {
-  try {
-      const approvedData = await PlacementData.find({ isApproved: true }); // Fetch only approved data
-      res.status(200).send(approvedData);
-  } catch (error) {
-      res.status(500).send({ message: 'Error fetching approved placement data', error });
-  }
+    try {
+        const placements = await PlacementApproved.find(); // Fetch all approved placement data
+        res.json(placements);
+    } catch (error) {
+        console.error('Error fetching approved placement data:', error);
+        res.status(500).json({ message: 'Error fetching approved placement data' });
+    }
 });
-
-
 
 
 
