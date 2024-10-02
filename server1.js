@@ -67,40 +67,50 @@ const UserSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-const PlacementSchema = new mongoose.Schema({
-  year: Number,
-  collegeName: String,
-  collegeEmail: String,
-  numberOfCompanies: Number,
-  departments: [
-    {
-      departmentName: String,
-      companies: [
-        {
-          companyName: String,
-          avgPackage: Number,
-          status: String,
-          totalPlaced: Number,
-        },
-      ],
-    },
-  ],
-});
-
-
-
-
-
-
-
-
-
-
-
 // Create Models
 const Student = mongoose.model('Student', StudentSchema);
 const User = mongoose.model('User', UserSchema);
-const Placement = mongoose.model('Placement', PlacementSchema);
+
+
+//placements
+const PlacementSchema = new mongoose.Schema({
+    year: Number,
+    collegeName: String,
+    collegeEmail: String,
+    numberOfCompanies: Number,
+    departments: [{
+        departmentName: String,
+        companies: [{
+            companyName: String,
+            avgPackage: Number,
+            status: String,
+            totalPlaced: Number
+        }]
+    }]
+});
+
+const Placement = mongoose.model('Placement', PlacementSchema, 'Placement_Collection');
+
+const PlacementApprovedSchema = new mongoose.Schema({
+    year: Number,
+    collegeName: String,
+    collegeEmail: String,
+    numberOfCompanies: Number,
+    departments: [{
+        departmentName: String,
+        companies: [{
+            companyName: String,
+            avgPackage: Number,
+            status: String,
+            totalPlaced: Number
+        }]
+    }]
+});
+
+const PlacementApproved = mongoose.model('PlacementApproved', PlacementApprovedSchema, 'Placement_Collection_Approved');
+
+
+
 
 
 
@@ -271,6 +281,8 @@ app.post('/upload-placement', upload.single('placementFile'), async (req, res) =
     res.status(500).json({ message: 'Failed to upload placement data.' });
   }
 });
+//placement all apis
+
 
 app.post('/api/addPlacementData', (req, res) => {
     const { year, collegeName, collegeEmail, numberOfCompanies, departments } = req.body;
@@ -335,6 +347,11 @@ app.get('/api/getApprovedPlacementData', async (req, res) => {
         res.status(500).json({ message: 'Error fetching placement data' });
     }
 });
+
+
+
+
+
 
 app.post('/collegeAdminData', async (req, res) => {
     const { email, location, pincode, universityAffiliation, naacCertPhoto, website, noOfBranches, branches } = req.body;
