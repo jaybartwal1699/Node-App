@@ -227,26 +227,7 @@ app.get('/api/students/byEmail', async (req, res) => {
 
 //Placement data in csv 
 
-app.post('/api/placements', async (req, res) => {
-    try {
-        const { collegeName, year, data } = req.body;
-        const placement = new Placement({ collegeName, year, data });
-        await placement.save();
-        res.status(201).json(placement);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
-    }
-});
 
-// GET endpoint to retrieve placement data
-app.get('/api/placements', async (req, res) => {
-    try {
-        const placements = await Placement.find();
-        res.status(200).json(placements);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
 
 
 
