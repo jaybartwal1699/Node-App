@@ -74,43 +74,13 @@ const User = mongoose.model('User', UserSchema);
 
 //placements
 // Define Schemas
-const PlacementSchema = new mongoose.Schema({
-    year: Number,
-    collegeName: String,
-    collegeEmail: String,
-    numberOfCompanies: Number,
-    departments: [{
-        departmentName: String,
-        companies: [{
-            companyName: String,
-            avgPackage: Number,
-            status: String,
-            totalPlaced: Number
-        }]
-    }]
+const placementSchema = new mongoose.Schema({
+    collegeName: { type: String, required: true },
+    year: { type: Number, required: true },
+    data: { type: Array, required: true }, // To store CSV data
 });
 
-// Unapproved placement collection
-const Placement = mongoose.model('Placement', PlacementSchema, 'Placement_Collection');
-
-// Approved placement collection
-const PlacementApprovedSchema = new mongoose.Schema({
-    year: Number,
-    collegeName: String,
-    collegeEmail: String,
-    numberOfCompanies: Number,
-    departments: [{
-        departmentName: String,
-        companies: [{
-            companyName: String,
-            avgPackage: Number,
-            status: String,
-            totalPlaced: Number
-        }]
-    }]
-});
-
-const PlacementApproved = mongoose.model('PlacementApproved', PlacementApprovedSchema, 'Placement_Collection_Approved');
+const Placement = mongoose.model('Placement', placementSchema);
 
 
 const collegeAdminSchema = new mongoose.Schema({
@@ -255,97 +225,30 @@ app.get('/api/students/byEmail', async (req, res) => {
   }
 });
 
-// Upload Placement Data
-app.post('/upload-placement', upload.single('placementFile'), async (req, res) => {
-  try {
-    const { collegeName, year } = req.body;
-    const file = req.file;
+//Placement data in csv 
 
-    if (!collegeName || !year || !file) return res.status(400).json({ message: 'College name, year, and file are required.' });
-
-    const placementData = new Placement({ collegeName, year, filePath: file.path });
-    await placementData.save();
-
-    // Parse PDF
-    const pdfParser = new PDFParser();
-    pdfParser.loadPDF(file.path);
-    pdfParser.on('pdfParser_dataError', errData => console.error(errData.parserError));
-    pdfParser.on('pdfParser_dataReady', pdfData => {
-      console.log('Parsed PDF Data:', pdfData);
-    });
-
-    res.status(201).json({ message: 'Placement data uploaded successfully.' });
-  } catch (error) {
-    console.error('Error uploading placement data:', error);
-    res.status(500).json({ message: 'Failed to upload placement data.' });
-  }
-});
-//placement all apis
-app.post('/api/addPlacementData', (req, res) => {
-    const { year, collegeName, collegeEmail, numberOfCompanies, departments } = req.body;
-
-    const newPlacement = new Placement({
-        year,
-        collegeName,
-        collegeEmail,
-        numberOfCompanies,
-        departments
-    });
-
-    newPlacement.save()
-        .then(() => res.status(200).json({ message: 'Placement data added successfully!' }))
-        .catch(err => res.status(400).json({ error: err.message }));
-});
-
-// Fetch Unapproved Placement Data
-app.get('/api/getUnapprovedPlacementData', (req, res) => {
-    Placement.find({})
-        .then(data => res.status(200).json(data))
-        .catch(err => res.status(400).json({ error: err.message }));
-});
-
-// Approve Placement Data
-app.post('/api/approvePlacementData', (req, res) => {
-    const placementId = req.body.id;
-
-    // Find the placement data by ID
-    Placement.findById(placementId)
-        .then(placement => {
-            if (!placement) {
-                return res.status(404).json({ message: 'Placement data not found' });
-            }
-
-            // Insert placement data into the approved collection
-            const approvedPlacement = new PlacementApproved({
-                year: placement.year,
-                collegeName: placement.collegeName,
-                collegeEmail: placement.collegeEmail,
-                numberOfCompanies: placement.numberOfCompanies,
-                departments: placement.departments
-            });
-
-            approvedPlacement.save()
-                .then(() => {
-                    // Once saved, remove it from the unapproved collection
-                    Placement.findByIdAndDelete(placementId)
-                        .then(() => res.status(200).json({ message: 'Placement data approved successfully!' }))
-                        .catch(err => res.status(400).json({ error: err.message }));
-                })
-                .catch(err => res.status(400).json({ error: err.message }));
-        })
-        .catch(err => res.status(400).json({ error: err.message }));
-});
-
-// Fetch Approved Placement Data
-app.get('/api/getApprovedPlacementData', async (req, res) => {
+app.post('/api/placements', async (req, res) => {
     try {
-        const placements = await PlacementApproved.find(); // Fetch all approved placement data
-        res.json(placements);
+        const { collegeName, year, data } = req.body;
+        const placement = new Placement({ collegeName, year, data });
+        await placement.save();
+        res.status(201).json(placement);
     } catch (error) {
-        console.error('Error fetching approved placement data:', error);
-        res.status(500).json({ message: 'Error fetching approved placement data' });
+        res.status(400).json({ message: error.message });
     }
 });
+
+// GET endpoint to retrieve placement data
+app.get('/api/placements', async (req, res) => {
+    try {
+        const placements = await Placement.find();
+        res.status(200).json(placements);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+
 
 
 
