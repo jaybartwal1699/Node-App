@@ -295,7 +295,29 @@ app.get('/api/students/recommendationInfo', async (req, res) => {
     res.status(500).json({ message: 'Error fetching student data', error: error.message });
   }
 });
+//college data for recomendation
+app.post('/colleges', async (req, res) => {
+  const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
+  try {
+    await client.connect();
+    const db = client.db(EduGuide);
+    const collection = db.collection(CollegeData);
+
+    // Insert the college data into the collection
+    const result = await collection.insertOne(req.body);
+
+    res.status(201).json({
+      message: 'College data added successfully',
+      collegeId: result.insertedId,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to add college data' });
+  } finally {
+    client.close();
+  }
+});
 
 
 // Start Server
