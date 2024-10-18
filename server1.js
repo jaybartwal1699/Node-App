@@ -521,6 +521,15 @@ function parseCsvFile(filePath) {
   });
 }
 
+app.get('/collegeAdmins', async (req, res) => {
+    try {
+        const collegeAdmins = await CollegeAdmin.find();
+        res.json(collegeAdmins);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch college admins' });
+    }
+});
+
 
 // Start Server
 const PORT = process.env.PORT || 3000;
