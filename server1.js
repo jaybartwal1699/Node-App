@@ -554,6 +554,61 @@ app.post('/disapproveCollegeAdmin', async (req, res) => {
 });
 
 
+// Transaction schema
+const transactionSchema = new mongoose.Schema({
+  email: String,
+  orderId: String,
+  amount: Number,
+  status: { type: String, default: 'pending' }, // Updated to include status
+  timestamp: { type: Date, default: Date.now }
+});
+
+const Transaction = mongoose.model('Transaction', transactionSchema);
+
+// Routes //new code
+app.get('/students', async (req, res) => {
+  try {
+    const students = await Student.find();
+    res.json(students);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/transactions', async (req, res) => {
+  const { email, orderId, amount } = req.body;
+
+  const transaction = new Transaction({
+    email,
+    orderId,
+    amount
+  });
+
+  try {
+    const savedTransaction = await transaction.save();
+    res.status(201).json(savedTransaction);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Endpoint to update payment status
+app.post('/payment-status', async (req, res) => {
+  const { orderId, status } = req.body;
+
+  try {
+    const transaction = await Transaction.findOneAndUpdate(
+      { orderId },
+      { status },
+      { new: true, upsert: true }
+    );
+    res.status(200).json(transaction);
+  } catch (error) {
+    res.status(500).json({ error: 'Error updating payment status' });
+  }
+});
+
+
 // Start Server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
