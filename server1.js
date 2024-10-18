@@ -530,6 +530,29 @@ app.get('/collegeAdmins', async (req, res) => {
     }
 });
 
+app.post('/approveCollegeAdmin', async (req, res) => {
+    try {
+        const admin = req.body;
+
+        await ApprovedCollegeAdmin.create(admin);
+        await CollegeAdmin.findByIdAndDelete(admin._id);
+
+        res.status(200).send('College Admin approved');
+    } catch (error) {
+        res.status(500).send('Failed to approve college admin');
+    }
+});
+
+app.post('/disapproveCollegeAdmin', async (req, res) => {
+    try {
+        const { id } = req.body;
+        await CollegeAdmin.findByIdAndDelete(id);
+        res.status(200).send('College Admin disapproved');
+    } catch (error) {
+        res.status(500).send('Failed to disapprove college admin');
+    }
+});
+
 
 // Start Server
 const PORT = process.env.PORT || 3000;
