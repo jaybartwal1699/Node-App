@@ -232,23 +232,53 @@ app.get('/api/students/byEmail', async (req, res) => {
 
 
 
-
-
-app.post('/collegeAdminData', async (req, res) => {
-    const { email, location, pincode, universityAffiliation, naacCertPhoto, website, noOfBranches, branches } = req.body;
-
-    try {
-        if (!email || !location || !pincode || !universityAffiliation || !naacCertPhoto || !website || !noOfBranches || !branches) {
-            return res.status(400).json({ error: 'All fields are required' });
-        }
-
-        const newCollegeAdmin = new CollegeAdmin({ email, location, pincode, universityAffiliation, naacCertPhoto, website, noOfBranches, branches });
-        await newCollegeAdmin.save();
-        res.status(201).send({ status: "ok", message: "College Admin data saved successfully" });
-    } catch (error) {
-        res.status(500).send({ error: "Error saving College Admin data" });
-    }
+// Multer Configuration for College Admin Data Upload
+const collegeAdminStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+      cb(null, 'uploads/'); // Upload destination
+  },
+  filename: (req, file, cb) => {
+      cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
+  },
 });
+
+const uploadCollegeAdmin = multer({ storage: collegeAdminStorage, limits: { fileSize: 5 * 1024 * 1024 } }); // 5 MB limit
+
+// Endpoint to handle college admin data submission //new admin data submission code inage naac image impeoved 
+app.post('/collegeAdminData', uploadCollegeAdmin.single('naacCertPhoto'), async (req, res) => {
+  const { email, location, pincode, universityAffiliation, website, noOfBranches, branches } = req.body;
+
+  try {
+      if (!email || !location || !pincode || !universityAffiliation || !website || !noOfBranches || !branches) {
+          return res.status(400).json({ error: 'All fields are required' });
+      }
+
+      // Check if file is uploaded
+      const naacCertPhoto = req.file ? `/uploads/${req.file.filename}` : null;
+      if (!naacCertPhoto) {
+          return res.status(400).json({ error: 'NAAC certificate photo is required' });
+      }
+
+      const newCollegeAdmin = new CollegeAdmin({
+          email,
+          location,
+          pincode,
+          universityAffiliation,
+          naacCertPhoto,
+          website,
+          noOfBranches,
+          branches,
+      });
+
+      await newCollegeAdmin.save();
+      res.status(201).send({ status: "ok", message: "College Admin data saved successfully" });
+  } catch (error) {
+      res.status(500).send({ error: "Error saving College Admin data" });
+  }
+});
+
+
+
 
 app.get('/api/students/recommendationInfo', async (req, res) => {
   try {
